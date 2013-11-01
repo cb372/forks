@@ -5,6 +5,7 @@ import org.joda.time.{DateTime, Duration}
 import scala.concurrent.Future
 import play.api.libs.json._
 import scala.Some
+import play.api.libs.ws.WS.WSRequestHolder
 
 /**
  * Author: chris
@@ -26,6 +27,17 @@ case class Repository(id: RepoId,
   def age: String = new Duration(createdAt, DateTime.now).getStandardDays + " days"
   def sinceLastPush: String = new Duration(lastPushedAt, DateTime.now).getStandardDays + " days"
 
+}
+
+case class Credentials(clientId: String, clientSecret: String)
+
+object OAuth {
+  val credentials: Option[Credentials] = {
+    for {
+      id <- sys.env.get("GITHUB_API_CLIENT_ID")
+      secret <- sys.env.get("GITHUB_API_CLIENT_SECRET")
+    } yield Credentials(id, secret)
+  }
 }
 
 object Repository {
@@ -57,14 +69,22 @@ object Repository {
     )
   }
 
+  def ws(url: String): WSRequestHolder = {
+    // If we have OAuth credentials, pass them in URL so we can get an increased rate limit
+    val holder = WS.url(url)
+    OAuth.credentials.fold(holder){ c =>
+      holder.withQueryString("client_id" -> c.clientId, "client_secret" -> c.clientSecret)
+    }
+  }
+
   def select(id: RepoId): Future[Option[Repository]] = {
-    WS.url(s"https://api.github.com/repos/$id").get().map { response =>
+    ws(s"https://api.github.com/repos/$id").get().map { response =>
       Some(fromJson(response.json))
     }.fallbackTo(Future.successful(None))
   }
 
   def getForks(id: RepoId): Future[Seq[Repository]] = {
-    WS.url(s"https://api.github.com/repos/$id/forks").get().map { response =>
+    ws(s"https://api.github.com/repos/$id/forks").get().map { response =>
       response.json.as[Seq[JsObject]].map(fromJson)
     }.fallbackTo(Future.successful(List()))
   }
