@@ -1,0 +1,14 @@
+@(repoId: String)
+
+@main {
+
+    <script>
+      $(function() {
+        $.get('/@repoId/repo.json', function(data) {
+          console.info(data);
+        });
+      });
+    </script>
+
+
+}

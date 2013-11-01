@@ -1,7 +1,46 @@
-@(message: String)
+@()
 
-@main("Welcome to Play") {
+@main {
 
-    @play20.welcome(message)
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <h1>GitHub Forks Lister</h1>
+      <h2>Provides a list of a projects' forks, and some hints as to their relative quality.</h2>
+      <form>
+        <input id="project-url" class="col-md-6" style="font-size: 1.5em; padding-left: 0.25em;" placeholder="e.g. 'https://github.com/scala/scala'" />
+        <input type="submit" class="col-md-1 btn btn-primary" value="Go!" />
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <p>Or try one of these examples:</p>
+      <ul>
+        <li><a href="/seratch/scalikejdbc">seratch/scalikejdbc</a></li>
+        <li><a href="/nvie/gitflow">nvie/gitflow</a></li>
+        <li><a href="/scala/scala">scala/scala</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    $(function() {
+      'use strict';
+
+      // Regexp to extract user and repo from github URL.
+      // Also accepts strings of the form:
+      // "cb372/line-count"
+      // "https://github.com/cb372/line-count/foo/bar.js"
+      var re = new RegExp("^(?:https?://.*github.com/)?([^/]+)/([^/]+)/?");
+      $('form').on('submit', function(event) {
+        event.preventDefault();
+
+        var match = re.exec($('#project-url').val());
+        var user = match[1], repo = match[2];
+        location.href = '/' + user + '/' + repo;
+      });
+    });
+  </script>
 
 }

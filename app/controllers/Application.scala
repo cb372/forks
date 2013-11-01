@@ -9,18 +9,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object Application extends Controller {
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
-  }
+  def index = Action { Ok(views.html.index()) }
+  def repo(owner: String, name: String) = Action { Ok(views.html.repo(RepoId(owner, name).toString)) }
 
-  def repo(owner: String, name: String) = Action.async {
+  def repoJson(owner: String, name: String) = Action.async {
     val repo = Repository.select(RepoId(owner, name))
     repo.map { opt =>
       opt.fold (NotFound("")) { r => Ok(Json.toJson(r)) }
     }
   }
 
-  def forks(owner: String, name: String) = Action.async {
+  def forksJson(owner: String, name: String) = Action.async {
     val forks = Repository.getForks(RepoId(owner, name))
     forks.map { fs =>
       Ok(Json.toJson(fs))
