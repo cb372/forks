@@ -1,18 +1,27 @@
 @(repoId: String)
 
 @main {
+  <script type="text/javascript" src="@routes.Assets.at("bower_components/tablesorter/js/jquery.tablesorter.min.js")"></script>
+} {
 
   <div class="row">
     <h1>Repository <a href="https://github.com/@repoId" target="_blank">@repoId</a></h1>
-    <table class="table">
-      <tr id="header">
-        <th class="col-md-4 repo-name" data-indent="-20">Repo</th>
-        <th class="col-md-1">Stars</th>
-        <th class="col-md-2">Forks</th>
-        <th class="col-md-2">Open Issues</th>
-        <th class="col-md-1">Created</th>
-        <th class="col-md-1">Last Pushed</th>
-      </tr>
+
+    <div class="alert alert-info">Tip: Click on column headers to sort. (<a id="reset-sort">Reset sort</a>)</div>
+
+    <table id="repo-list" class="table tablesorter">
+      <thead>
+        <tr id="header">
+          <th class="col-md-4 repo-name" data-indent="-20">Repo</th>
+          <th class="col-md-1">Stars</th>
+          <th class="col-md-2">Forks</th>
+          <th class="col-md-2">Open Issues</th>
+          <th class="col-md-1">Created</th>
+          <th class="col-md-1">Last Pushed</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+      </tbody>
     </table>
   </div>
 
@@ -62,7 +71,6 @@
     }
 
     function addRowForRepo(repo, $parentRow, $rowAbove) {
-      console.info(repo);
       var $row = $('<tr id="'+htmlId(repo)+'"></tr>');
       $row.append(nameColumn(repo, $parentRow));
       $row.append(starsColumn(repo));
@@ -70,12 +78,14 @@
       $row.append(issuesColumn(repo));
       $row.append(createdColumn(repo));
       $row.append(pushedColumn(repo));
-      $row.insertAfter($rowAbove);
+
+      if (!!($rowAbove)) $row.insertAfter($rowAbove);
+      else $('#table-body' ).append($row);
+
       return $row;
     }
 
     function loadForks(repo, link) {
-      console.info('Loading forks for ' + fullRepoName(repo));
       link.html('Loading...');
 
       $.get('/' + fullRepoName(repo) + '/forks.json', function(data) {
@@ -87,6 +97,8 @@
         });
 
         link.remove();
+
+        $('#repo-list').trigger("update");
       });
     }
 
@@ -98,9 +110,17 @@
     }
 
     $(function() {
+      var $repoList = $('#repo-list');
+
+      $repoList.tablesorter();
+      $('#reset-sort' ).click(function() {
+        $repoList.trigger('sortReset');
+      });
+
       $.get('/@repoId/repo.json', function(data) {
         var $headerRow = $('#header');
-        addRowForRepo(data, $headerRow, $headerRow);
+        addRowForRepo(data, $headerRow);
+
       });
     });
   </script>
