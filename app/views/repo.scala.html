@@ -8,7 +8,7 @@
     <a href="/"><< Back to Top</a>
     <h1>Repository <a href="https://github.com/@repoId" target="_blank">@repoId</a> <span id="loading">(Loading...)</span></h1>
 
-    <div class="alert alert-info">Tip: Click on column headers to sort. (<a id="reset-sort">Reset sort</a>)</div>
+    <div class="alert alert-info">Tip: Click on column headers to sort. (<a href="#" id="reset-sort">Reset sort</a>)</div>
 
     <table id="repo-list" class="table tablesorter">
       <thead>
@@ -105,8 +105,8 @@
 
     function forksLink(repo) {
       if (repo.fork_count == 0) return '';
-      var $a = $('<a style="padding-left: 5px;">Load...</a>');
-      $a.click(function() { loadForks(repo, $a); });
+      var $a = $('<a href="#" class="load-forks" style="padding-left: 5px;">(Load...)</a>');
+      $a.click(function(e) { e.preventDefault(); loadForks(repo, $a); });
       return $a;
     }
 
@@ -114,7 +114,8 @@
       var $repoList = $('#repo-list');
 
       $repoList.tablesorter();
-      $('#reset-sort' ).click(function() {
+      $('#reset-sort').click(function(e) {
+        e.preventDefault();
         $repoList.trigger('sortReset');
       });
 
@@ -122,8 +123,11 @@
         var $headerRow = $('#header');
         addRowForRepo(data, $headerRow);
 
-        $('#loading' ).remove();
+        $('#loading').remove();
+
+        $('.load-forks').click();
       });
+
     });
   </script>
 
