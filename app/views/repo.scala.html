@@ -2,13 +2,108 @@
 
 @main {
 
-    <script>
-      $(function() {
-        $.get('/@repoId/repo.json', function(data) {
-          console.info(data);
+  <div class="row">
+    <h1>Repository <a href="https://github.com/@repoId" target="_blank">@repoId</a></h1>
+    <table class="table">
+      <tr id="header">
+        <th class="col-md-4 repo-name" data-indent="-20">Repo</th>
+        <th class="col-md-1">Stars</th>
+        <th class="col-md-2">Forks</th>
+        <th class="col-md-2">Open Issues</th>
+        <th class="col-md-1">Created</th>
+        <th class="col-md-1">Last Pushed</th>
+      </tr>
+    </table>
+  </div>
+
+  <script>
+    var indent = 20;
+
+    function htmlId(repo) {
+      return repo.owner + '_' + repo.name;
+    }
+
+    function fullRepoName(repo) {
+      return repo.owner + '/' + repo.name;
+    }
+
+    function nameColumn(repo, $parentRow) {
+      var padding = parseInt($parentRow.find('.repo-name').data('indent')) + indent;
+      return '<td class="repo-name" data-indent="' + padding + '" style="padding-left: ' + padding + 'px;"><a href="https://github.com/' + fullRepoName(repo) + '" target="_blank">' + fullRepoName(repo) + '</a></td>';
+    }
+
+    function number(value) {
+      if (value == 0) return value;
+      else return '<strong>' + value + '</strong>';
+    }
+
+    function starsColumn(repo) {
+    return '<td>' + number(repo.star_count) + '</td>';
+    }
+
+    function forksColumn(repo) {
+      var $td = $('<td></td>');
+      $td.append(number(repo.fork_count));
+      $td.append(forksLink(repo));
+      return $td;
+    }
+
+    function issuesColumn(repo) {
+      return '<td>' + number(repo.open_issue_count) + '</td>';
+    }
+
+    function createdColumn(repo) {
+      return '<td>' + repo.created_at + '</td>';
+    }
+
+    function pushedColumn(repo) {
+      if (repo.last_pushed_at == 'Never') return '<td>' + repo.last_pushed_at + '</td>';
+      else return '<td><strong>' + repo.last_pushed_at + '</strong></td>';
+    }
+
+    function addRowForRepo(repo, $parentRow, $rowAbove) {
+      console.info(repo);
+      var $row = $('<tr id="'+htmlId(repo)+'"></tr>');
+      $row.append(nameColumn(repo, $parentRow));
+      $row.append(starsColumn(repo));
+      $row.append(forksColumn(repo));
+      $row.append(issuesColumn(repo));
+      $row.append(createdColumn(repo));
+      $row.append(pushedColumn(repo));
+      $row.insertAfter($rowAbove);
+      return $row;
+    }
+
+    function loadForks(repo, link) {
+      console.info('Loading forks for ' + fullRepoName(repo));
+      link.html('Loading...');
+
+      $.get('/' + fullRepoName(repo) + '/forks.json', function(data) {
+        var $parentRow = $('#' + htmlId(repo));
+
+        var $rowAbove = $parentRow;
+        $.each(data, function(index, fork) {
+          $rowAbove = addRowForRepo(fork, $parentRow, $rowAbove);
         });
+
+        link.remove();
       });
-    </script>
+    }
+
+    function forksLink(repo) {
+      if (repo.fork_count == 0) return '';
+      var $a = $('<a style="padding-left: 5px;">Load...</a>');
+      $a.click(function() { loadForks(repo, $a); });
+      return $a;
+    }
+
+    $(function() {
+      $.get('/@repoId/repo.json', function(data) {
+        var $headerRow = $('#header');
+        addRowForRepo(data, $headerRow, $headerRow);
+      });
+    });
+  </script>
 
 
 }

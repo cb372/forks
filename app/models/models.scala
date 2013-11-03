@@ -24,8 +24,17 @@ case class Repository(id: RepoId,
                       lastPushedAt: DateTime,
                       lastUpdatedAt: DateTime) {
 
-  def age: String = new Duration(createdAt, DateTime.now).getStandardDays + " days"
-  def sinceLastPush: String = new Duration(lastPushedAt, DateTime.now).getStandardDays + " days"
+  def daysAgoPretty(daysAgo: Long) =
+    daysAgo match {
+      case 0 => "Today"
+      case 1 => "Yesterday"
+      case d => d + " days ago"
+    }
+  def createdPretty: String = daysAgoPretty(new Duration(createdAt, DateTime.now).getStandardDays)
+  def lastPushPretty: String = {
+    if (lastPushedAt.isBefore(createdAt)) "Never"
+    else daysAgoPretty(new Duration(lastPushedAt, DateTime.now).getStandardDays)
+  }
 
 }
 
@@ -51,8 +60,8 @@ object Repository {
         "fork_count" -> r.forkCount,
         "star_count" -> r.starCount,
         "open_issue_count" -> r.openIssueCount,
-        "age" -> r.age,
-        "since_last_push" -> r.sinceLastPush
+        "created_at" -> r.createdPretty,
+        "last_pushed_at" -> r.lastPushPretty
       )
     }
   }
@@ -84,7 +93,7 @@ object Repository {
   }
 
   def getForks(id: RepoId): Future[Seq[Repository]] = {
-    ws(s"https://api.github.com/repos/$id/forks").get().map { response =>
+    ws(s"https://api.github.com/repos/$id/forks").withQueryString("sort" -> "watchers").get().map { response =>
       response.json.as[Seq[JsObject]].map(fromJson)
     }.fallbackTo(Future.successful(List()))
   }
