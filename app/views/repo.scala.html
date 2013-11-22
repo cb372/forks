@@ -29,8 +29,12 @@
   <script>
     var indent = 20;
 
+    function safeString(s) {
+      return s.replace(/[^A-Za-z0-9-_]/, "_");
+    }
+
     function htmlId(repo) {
-      return repo.owner + '_' + repo.name;
+      return safeString(repo.owner) + '_' + safeString(repo.name);
     }
 
     function fullRepoName(repo) {
